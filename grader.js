@@ -68,7 +68,7 @@ var buildfn = function(tempfile, checks) {
 	if (result instanceof Error) {
             console.error('Error: ' + util.format(response.message));
 	} else {
-	    console.error('Writen to ' + tempFile);
+	    //console.error('Writen to ' + tempFile);
             fs.writeFileSync(tempfile, result);
 	    checkFile(tempfile, checks);
 	}
@@ -93,7 +93,7 @@ if(require.main == module) {
 
     if (program.url)
     {
-	console.log("Use URL " + program.url );
+	//console.log("Use URL " + program.url );
 	var response2console = buildfn(tempFile, program.checks);
 	rest.get(program.url).on('complete', response2console);
     }

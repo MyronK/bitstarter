@@ -24,8 +24,10 @@ References:
 var fs = require('fs');
 var program = require('commander');
 var cheerio = require('cheerio');
+var rest = require('restler');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var tempFile = "temp.html";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -61,14 +63,47 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
+var buildfn = function(tempfile, checks) {
+    var response2console = function(result, response) {
+	if (result instanceof Error) {
+            console.error('Error: ' + util.format(response.message));
+	} else {
+	    console.error('Writen to ' + tempFile);
+            fs.writeFileSync(tempfile, result);
+	    checkFile(tempfile, checks);
+	}
+    }
+    return response2console;
+};
+
+var checkFile = function(tempfile, checks)
+{
+    var checkJson = checkHtmlFile(tempFile, program.checks);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    console.log(outJson);
+}
+
+
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-        .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+        .option('-u, --url <url_link>', 'Path to url')
+	.parse(process.argv);
+
+    if (program.url)
+    {
+	console.log("Use URL " + program.url );
+	var response2console = buildfn(tempFile, program.checks);
+	rest.get(program.url).on('complete', response2console);
+    }
+    else
+    {
+	tempFile = program.file;
+	checkFile(tempFile, program.checks);
+    }
+
+    
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
